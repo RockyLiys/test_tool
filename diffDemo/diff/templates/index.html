@@ -1,0 +1,251 @@
+{% load static %}
+<!doctype html>
+<html lang="en" style="height:99%;">
+<head>
+<meta charset="UTF-8" />
+<title>XML, JSON Viewer with Google Drive</title>
+<meta name="google" content="notranslate">
+<meta name="description" content="The online viewer for viewing the structure of XML, JSON files. This Viewer is easy to use. This XML, JSON Viewer is a simple and powerful, very useful program for XML viewing. Supported formats: xml, htm, html, xsl, xslt, dtd, xhtml, mathml, svg, kml, rss, atom, json, har...">
+<meta name="keywords" content="xml viewer, json viewer, xml viewer for google drive, json viewer for google drive, online xml viewer, online json viewer, xsl viewer, dtd viewer, xhtml viewer, mathml viewer, svg viewer">
+
+    <link rel="stylesheet" href="{% static '/css/main.css' %}" media="all" />
+        <script src="{% static 'js/all.js' %}"></script>
+</head>
+<body style="height:99%;" onload="init()">
+
+<div id="divdata" style="position:absolute;left:5px;top:5px;display:none;z-index:99999999;background-color:white;-webkit-box-shadow: 0 0 25px #999;-moz-box-shadow: 0 0 25px #999;box-shadow: 0 0 25px #999;">
+<table>
+<tr><td><textarea id="textdata" style="width:700px;height:300px" spellcheck=false></textarea>
+<tr><td align=center><button type="button" onclick="proc_enterdata()">OK, Parse and View this</button> <button type="button" onclick="_getid('divdata').style.display='none';">Close</button>
+</table>
+</div>
+
+<style>
+#menus td{
+    font-size:13px;
+}
+</style>
+<div>
+<table id="menus" style="white-space:nowrap"><tr>
+<td>ViewType: <select id="viewtype" onchange="viewtype_onchange(this)">
+<option value="xml1">XML Default
+<option value="xml2">XML Advanced
+<option value="json">JSON
+</select>
+<td><div id="filename" style="margin-left:5px"></div>
+<td><div style="margin-left:5px;color:green;">Drop a file on this page!!</div>
+<td><button type="button" onclick="proc_showdata()" style="margin-left:5px">Enter Data</button>
+</table>
+<textarea id="gdata" style="width:400px;height:100px;display:none" spellcheck=false>
+    {"cdcds":"<b>csdcdsc</b>"}
+</textarea>
+</div>
+    <div class="xv-search-panel">
+        <input type="search" class="xv-search-field" spellcheck="false" placeholder="Search by name or XPath" />
+        <span class="xv-search-xpath-result"></span>
+    </div>
+    <div class="xv-source-pane">
+        <div class="xv-source-pane-inner"></div>
+    </div>
+
+    <style>
+    .xv-source-pane{
+        margin-top:20px;
+    }
+    .xv-outline{
+        margin-top:20px;
+    }
+    </style>
+
+
+<script>
+function setCookie(name, value, expires) { 
+  if (!expires) expires=1000*60*60*24*365*5;
+  path="/";
+  domain=document.domain;
+  secure=false;
+  var today = new Date(); 
+  today.setTime( today.getTime() ); 
+  var expires_date = new Date( today.getTime() + (expires) ); 
+  document.cookie = name + "=" +escape( value ) + 
+          ( ( expires ) ? ";expires=" + expires_date.toGMTString() : "" ) + //expires.toGMTString() 
+          ( ( path ) ? ";path=" + path : "" ) + 
+          ( ( domain ) ? ";domain=" + domain : "" ) + 
+          ( ( secure ) ? ";secure" : "" ); 
+}
+function getCookie( name ) {
+  var nameOfCookie = name + "=";
+  var x = 0;
+  while ( x <= document.cookie.length ) {
+    var y = (x+nameOfCookie.length);
+    if ( document.cookie.substring( x, y ) == nameOfCookie ) {
+      if ( (endOfCookie=document.cookie.indexOf( ";", y )) == -1 )
+         endOfCookie = document.cookie.length;
+      return unescape( document.cookie.substring( y, endOfCookie ) );
+    }
+    x = document.cookie.indexOf( " ", x ) + 1;
+    if ( x == 0 ) break;
+  }
+  return "";
+}
+function _getid(id){
+    return document.getElementById(id);
+}
+function html_entity_encode(str){
+  str = str.replace(/&/gi, "&amp;");
+  str = str.replace(/>/gi, "&gt;");
+  str = str.replace(/</gi, "&lt;");
+  str = str.replace(/\"/gi, "&quot;");
+  str = str.replace(/\'/gi, "&#039;");
+  return str;
+}
+var opentimer;
+function init(){    
+                    _getid("viewtype").value='xml2';
+        setCookie('xmltype','2');
+                
+
+    if(parent && parent.g_content && parent.g_content.data){
+        clearInterval(opentimer);
+        opentimer=setInterval(function(){
+
+            clearInterval(opentimer);
+            _getid("filename").innerHTML='FileName: '+html_entity_encode(parent.g_content.filename || '');
+
+                xv_controller.process(parent.g_content.data);
+        
+    },100);       
+    }
+}
+function proc_showdata(){
+    _getid('divdata').style.display='';
+    var a=_getid('textdata');
+    if(a){
+        /*if(!a.value && parent && parent.g_content && parent.g_content.data){
+            a.value=parent.g_content.data;
+        }*/
+        a.focus();
+    }
+}
+function proc_enterdata(){
+    _getid('divdata').style.display='none';
+    if(parent && parent.proc_parse) parent.proc_parse(_getid('textdata').value, 'User Enter Data');
+}
+function g_parsergo(ischeck){
+    if(ischeck){
+        return "";
+    }else{
+                //location.href=location.href;
+        //return;
+                init();
+    }
+}
+function viewtype_onchange(f){
+    var viewtype,xmltype;
+    if(f.value=='json'){
+        viewtype='2';
+        xmltype='';
+    }else if(f.value=='xml1'){
+        viewtype='';
+        xmltype='1';
+    }else if(f.value=='xml2'){
+        viewtype='';
+        xmltype='2';
+    }
+    s='?content=1&viewtype='+viewtype+'&xmltype='+xmltype;
+    location.href=s;
+}
+
+var gfiles;
+function handleFileSelect(files){
+    if(!window.FileReader || !window.XMLHttpRequest){
+        alert("This browser does not support.");
+        return;
+    }
+
+    if(files) gfiles=files;
+    if(!gfiles || gfiles.length==0) return;
+
+    var tot=0;
+    for(var i = 0, f; f = gfiles[i]; i++){
+
+    var usearray=false;
+    var f=gfiles[i];
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        if(usearray){
+            var b=new Uint8Array(e.target.result);
+            var s='';
+            var len = b.byteLength;
+            for (var i = 0; i < len; i++) {
+                s+=String.fromCharCode(b[i]);
+            }
+            if(parent && parent.proc_parse) parent.proc_parse(s, this.name);
+        }else{
+            if(parent && parent.proc_parse) parent.proc_parse(e.target.result, this.name);
+        }
+    };
+    reader.onerror = function(){
+        alert('Read Error: '+this.name);
+    };
+    reader.id=i;
+    reader.name=f.name;
+    if(!reader.readAsText){
+        alert("This browser does not support.");
+        return;
+    }else{
+        reader.readAsText(f);
+    }
+    break;
+    }
+}
+
+function c_json_nowrap_onclick(f){
+    var a=_getid('json-renderer');
+    var b=_getid('c_json_nowrap').checked;
+    setCookie('c_json_nowrap',b);
+    if(b) a.style.whiteSpace='nowrap';
+    else a.style.whiteSpace='normal';
+}
+function init_load(){
+    var holder = document;
+    holder.ondragover = function (e) { 
+        try{var ua=navigator.userAgent;
+            if(ua && ua.indexOf("Chrome")>=0){                  
+                if(e.originalEvent) e = e.originalEvent;
+                if(e.dataTransfer){
+                    var b = e.dataTransfer.effectAllowed;
+                    e.dataTransfer.dropEffect = ('move' === b || 'linkMove' === b) ? 'move' : 'copy';
+                }
+            }
+        }catch(err){}
+        return false; 
+    };
+    holder.ondragend = function () { return false; };
+    holder.ondrop = function (e) {
+        e.preventDefault();             
+        handleFileSelect(e.dataTransfer.files);
+        return false;
+    }
+    
+    var a=_getid('c_json_nowrap');
+    if(a){
+        var s=getCookie('c_json_nowrap');
+        if(!s || s=='true') a.checked=true;
+        c_json_nowrap_onclick(a);
+    }
+}
+init_load();
+
+/*function test(){
+            handleText(_getid("gdata").value);
+        }
+test();*/
+/*if(self===top){
+    top.location='/';
+}*/
+</script>
+
+</html>
+
+
